@@ -1,13 +1,11 @@
-
-
 import streamlit as st
 import pandas as pd
 import os
 import plotly.express as px
 import plotly.graph_objects as go
 
-# Caminho do arquivo Excel
-EXCEL_PATH = r"Z:\Risco\Workspace\VictorRoure\Evolucao_Precos_Exposicao\Evolucao.xlsx"
+# Caminho relativo ao arquivo Excel
+EXCEL_PATH = "Evolucao.xlsx"
 
 st.set_page_config(
     page_title="Evolução de Preços - Exposição",
@@ -40,8 +38,14 @@ else:
                 if selecao:
                     df_filtrado = df_filtrado[df_filtrado[col].isin(selecao)]
 
+        # Converte Quantidade para percentual
+        df_filtrado['Quantidade %'] = df_filtrado['Quantidade'] / 100
+
         st.subheader("📈 Resultado com filtros aplicados")
-        st.dataframe(df_filtrado, use_container_width=True)
+        # Formata a visualização da coluna percentual
+        df_exibicao = df_filtrado.copy()
+        df_exibicao['Quantidade %'] = df_exibicao['Quantidade %'].map(lambda x: f"{x:.2%}")
+        st.dataframe(df_exibicao, use_container_width=True)
 
         # Gráfico
         st.subheader("📊 Visualização Gráfica")
@@ -54,40 +58,55 @@ else:
             df_filtrado = df_filtrado.dropna(subset=['Data'])
 
             if df_filtrado['Data'].nunique() > 1:
-                # Gráfico de linha (evolução temporal)
                 ativos = df_filtrado['Ativo'].dropna().unique()
                 ativo_selecionado = st.selectbox("Selecione um ativo:", sorted(ativos))
                 df_ativo = df_filtrado[df_filtrado['Ativo'] == ativo_selecionado].sort_values(by='Data')
 
                 fig = go.Figure()
                 fig.add_trace(go.Scatter(x=df_ativo['Data'], y=df_ativo[col_preco], mode='lines', name='Preço'))
-                fig.add_trace(go.Scatter(x=df_ativo['Data'], y=df_ativo['Quantidade'], mode='lines', name='Quantidade', yaxis='y2'))
+                fig.add_trace(go.Scatter(
+                    x=df_ativo['Data'],
+                    y=df_ativo['Quantidade %'],
+                    mode='lines',
+                    name='Quantidade (%)',
+                    yaxis='y2'
+                ))
 
                 fig.update_layout(
-                    title=f"Evolução de Preço e Quantidade - {ativo_selecionado}",
+                    title=f"Evolução de Preço e Quantidade (%) - {ativo_selecionado}",
                     xaxis=dict(title='Data'),
                     yaxis=dict(title='Preço'),
-                    yaxis2=dict(title='Quantidade', overlaying='y', side='right'),
+                    yaxis2=dict(
+                        title='Quantidade (%)',
+                        overlaying='y',
+                        side='right',
+                        tickformat=".2%"
+                    ),
                     legend=dict(title='Variável')
                 )
 
                 st.plotly_chart(fig, use_container_width=True)
             else:
-                # Gráficos de barras (preço e quantidade por ativo)
                 st.info("⚠️ Apenas uma data disponível. Exibindo gráficos de barras comparativos.")
 
                 fig_preco = px.bar(df_filtrado, x='Ativo', y=col_preco, title="Preço por Ativo", labels={col_preco: 'Preço (R$)'})
                 fig_preco.update_layout(xaxis_tickangle=-45)
                 st.plotly_chart(fig_preco, use_container_width=True)
 
-                fig_quantidade = px.bar(df_filtrado, x='Ativo', y='Quantidade', title="Quantidade por Ativo", labels={'Quantidade': 'Quantidade'})
-                fig_quantidade.update_layout(xaxis_tickangle=-45)
+                fig_quantidade = px.bar(
+                    df_filtrado,
+                    x='Ativo',
+                    y='Quantidade %',
+                    title="Quantidade (%) por Ativo",
+                    labels={'Quantidade %': 'Quantidade (%)'}
+                )
+                fig_quantidade.update_layout(
+                    xaxis_tickangle=-45,
+                    yaxis_tickformat=".2%"
+                )
                 st.plotly_chart(fig_quantidade, use_container_width=True)
         else:
             st.warning(f"O DataFrame precisa conter as colunas: {colunas_necessarias}")
 
     except Exception as e:
         st.error(f"❌ Erro ao processar o arquivo Excel: {e}")
-
-
-#python -m streamlit run Z:\Risco\Workspace\VictorRoure\Evolucao_Precos_Exposicao\main.py
