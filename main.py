@@ -24,9 +24,6 @@ else:
         aba = st.selectbox("Selecione a aba para visualização:", xls.sheet_names)
         df = pd.read_excel(xls, sheet_name=aba)
 
-        st.subheader("📄 Dados brutos")
-        st.dataframe(df, use_container_width=True)
-
         # Filtros interativos
         st.subheader("🔍 Filtros interativos")
         filtro_colunas = st.multiselect("Selecione colunas para aplicar filtros:", df.columns)
@@ -41,13 +38,7 @@ else:
         # Converte Quantidade para percentual
         df_filtrado['Quantidade %'] = df_filtrado['Quantidade'] / 100
 
-        st.subheader("📈 Resultado com filtros aplicados")
-        # Formata a visualização da coluna percentual
-        df_exibicao = df_filtrado.copy()
-        df_exibicao['Quantidade %'] = df_exibicao['Quantidade %'].map(lambda x: f"{x:.2%}")
-        st.dataframe(df_exibicao, use_container_width=True)
-
-        # Gráfico
+        # Gráfico (vem primeiro)
         st.subheader("📊 Visualização Gráfica")
 
         col_preco = 'Preço D0' if 'Preço D0' in df_filtrado.columns else 'Preço'
@@ -107,6 +98,16 @@ else:
                 st.plotly_chart(fig_quantidade, use_container_width=True)
         else:
             st.warning(f"O DataFrame precisa conter as colunas: {colunas_necessarias}")
+
+        # Exibição da tabela com os filtros aplicados
+        st.subheader("📈 Resultado com filtros aplicados")
+        df_exibicao = df_filtrado.copy()
+        df_exibicao['Quantidade %'] = df_exibicao['Quantidade %'].map(lambda x: f"{x:.2%}")
+        st.dataframe(df_exibicao, use_container_width=True)
+
+        # Dados brutos (por último)
+        st.subheader("📄 Dados brutos")
+        st.dataframe(df, use_container_width=True)
 
     except Exception as e:
         st.error(f"❌ Erro ao processar o arquivo Excel: {e}")
