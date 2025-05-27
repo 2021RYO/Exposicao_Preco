@@ -22,25 +22,34 @@ else:
         df_gestora['Data'] = pd.to_datetime(df_gestora['Data'], errors='coerce')
         df_gestora = df_gestora.dropna(subset=['Data'])
 
-        # Calcula percentual
-        df_gestora['Quantidade %'] = df_gestora['Quantidade'] / 100
+        df_gestora['Exposicao %'] = df_gestora['Exposicao Fundo'] / 100
 
-        gestores = df_gestora['Gestora'].dropna().unique()
-        ativo = st.selectbox("Selecione o ativo (Gestora):", sorted(df_gestora['Ativo'].dropna().unique()))
-        gestora = st.selectbox("Selecione a gestora:", sorted(gestores))
+        ativos = sorted(df_gestora['Ativo'].dropna().unique())
+        fundos = sorted(df_gestora['Fundo'].dropna().unique())
 
-        filtro_gestora = df_gestora[(df_gestora['Gestora'] == gestora) & (df_gestora['Ativo'] == ativo)]
-        filtro_gestora = filtro_gestora.sort_values(by='Data')
+        fundo_sel_gestora = st.selectbox("Selecione o fundo (Gestora):", fundos)
+        ativo_sel_gestora = st.selectbox("Selecione o ativo (Gestora):", ativos)
+
+        filtro_gestora = df_gestora[
+            (df_gestora['Fundo'] == fundo_sel_gestora) &
+            (df_gestora['Ativo'] == ativo_sel_gestora)
+        ].sort_values(by='Data')
 
         fig1 = go.Figure()
-        fig1.add_trace(go.Scatter(x=filtro_gestora['Data'], y=filtro_gestora['Preço'], mode='lines', name='Preço'))
-        fig1.add_trace(go.Scatter(x=filtro_gestora['Data'], y=filtro_gestora['Quantidade %'], mode='lines', name='Quantidade (%)', yaxis='y2'))
+        fig1.add_trace(go.Scatter(x=filtro_gestora['Data'], y=filtro_gestora['Preco'], mode='lines', name='Preço'))
+        fig1.add_trace(go.Scatter(
+            x=filtro_gestora['Data'],
+            y=filtro_gestora['Exposicao %'],
+            mode='lines',
+            name='Exposição (%)',
+            yaxis='y2'
+        ))
 
         fig1.update_layout(
-            title=f"Evolução: {ativo} - Gestora {gestora}",
+            title=f"Evolução: {ativo_sel_gestora} - Fundo {fundo_sel_gestora}",
             xaxis=dict(title='Data'),
             yaxis=dict(title='Preço'),
-            yaxis2=dict(title='Quantidade (%)', overlaying='y', side='right', tickformat=".2%"),
+            yaxis2=dict(title='Exposição (%)', overlaying='y', side='right', tickformat=".2%"),
             legend=dict(title='Variável')
         )
 
@@ -48,31 +57,38 @@ else:
 
         # ========== GRÁFICO 2: EVOLUÇÃO FUNDOS ==========
         st.header("📉 Evolução por Fundo")
+        df_fundos = pd.read_excel(xls, sheet_name="Historico_Posicoes_Fundos")
+        df_fundos['Data'] = pd.to_datetime(df_fundos['Data'], errors='coerce')
+        df_fundos = df_fundos.dropna(subset=['Data'])
 
-        df_fundo = pd.read_excel(xls, sheet_name="Historico_Posicoes_Fundo")
-        df_fundo['Data'] = pd.to_datetime(df_fundo['Data'], errors='coerce')
-        df_fundo = df_fundo.dropna(subset=['Data'])
+        df_fundos['Exposicao %'] = df_fundos['Exposicao Fundo'] / 100
 
-        df_fundo['Quantidade %'] = df_fundo['Quantidade'] / 100
+        fundos2 = sorted(df_fundos['Fundo'].dropna().unique())
+        ativos2 = sorted(df_fundos['Ativo'].dropna().unique())
 
-        fundos = df_fundo['Fundo'].dropna().unique()
-        ativos_fundo = df_fundo['Ativo'].dropna().unique()
+        fundo_sel = st.selectbox("Selecione o fundo (Fundo):", fundos2)
+        ativo_sel = st.selectbox("Selecione o ativo (Fundo):", ativos2)
 
-        fundo_sel = st.selectbox("Selecione o fundo:", sorted(fundos))
-        ativo_sel = st.selectbox("Selecione o ativo (Fundo):", sorted(ativos_fundo))
-
-        filtro_fundo = df_fundo[(df_fundo['Fundo'] == fundo_sel) & (df_fundo['Ativo'] == ativo_sel)]
-        filtro_fundo = filtro_fundo.sort_values(by='Data')
+        filtro_fundo = df_fundos[
+            (df_fundos['Fundo'] == fundo_sel) &
+            (df_fundos['Ativo'] == ativo_sel)
+        ].sort_values(by='Data')
 
         fig2 = go.Figure()
-        fig2.add_trace(go.Scatter(x=filtro_fundo['Data'], y=filtro_fundo['Preço'], mode='lines', name='Preço'))
-        fig2.add_trace(go.Scatter(x=filtro_fundo['Data'], y=filtro_fundo['Quantidade %'], mode='lines', name='Quantidade (%)', yaxis='y2'))
+        fig2.add_trace(go.Scatter(x=filtro_fundo['Data'], y=filtro_fundo['Preco'], mode='lines', name='Preço'))
+        fig2.add_trace(go.Scatter(
+            x=filtro_fundo['Data'],
+            y=filtro_fundo['Exposicao %'],
+            mode='lines',
+            name='Exposição (%)',
+            yaxis='y2'
+        ))
 
         fig2.update_layout(
             title=f"Evolução: {ativo_sel} - Fundo {fundo_sel}",
             xaxis=dict(title='Data'),
             yaxis=dict(title='Preço'),
-            yaxis2=dict(title='Quantidade (%)', overlaying='y', side='right', tickformat=".2%"),
+            yaxis2=dict(title='Exposição (%)', overlaying='y', side='right', tickformat=".2%"),
             legend=dict(title='Variável')
         )
 
